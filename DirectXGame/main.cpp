@@ -21,12 +21,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// DirectXCommonクラスが管理している、コマンドリストの取得
 	ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList();
 
-	// RootSignatureの作成
-	// 構造体にデータを用意する
-	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};                                          // RootSignatureの設定
-	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; // InputLayoutを使う場合は必須
-	ID3DBlob* singnedBlob = nullptr;                                                               // 署名済みバイナリ格納用
-
+                                                            
 	// RootSignatureの作成-------------------------------------------------------------------------------
 	// 構造体にデータを用意する
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
@@ -48,6 +43,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	assert(SUCCEEDED(hr));
 
+
 	// InputLayout----------------------------------------------------------------------------------------------------------
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[1] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
@@ -58,10 +54,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	inputLayoutDesc.pInputElementDescs = inputElementDescs;
 	inputLayoutDesc.NumElements = _countof(inputElementDescs);
 
+
 	// BlendState----------------------------------------------------------------------------------------------------------
 	D3D12_BLEND_DESC blendDesc{};
 	// すべての色要素を書き込む
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
 
 	// RasterizerState----------------------------------------------------------------------------------------------------------
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -69,6 +67,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	// 塗りつぶしモードをソリッドにする（ワイヤーフレームならD3D12_FILL_MODE_WIREFRAME）
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
 
 	// vertexShaderをコンパイルする------------------------------------------------------------------------------------------
 	// コンパイル済みのShader、エラー時情報の格納場所の用意
@@ -115,12 +114,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// PSO(PipelineStateObject)の生成 ---------------------------------------------------
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
-	graphicsPipelineStateDesc.pRootSignature = rootSignature;// RootSignature
-	graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;// InputLayout
-	graphicsPipelineStateDesc.VS = {vsBlob->GetBufferPointer(), vsBlob->GetBufferSize()};// VertexShader
-	graphicsPipelineStateDesc.PS = {psBlob->GetBufferPointer(), psBlob->GetBufferSize()};// PixelShader
-	graphicsPipelineStateDesc.BlendState = blendDesc;                      // BlendState
-	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;            // RasterizerState
+	graphicsPipelineStateDesc.pRootSignature = rootSignature;                             // RootSignature
+	graphicsPipelineStateDesc.InputLayout = inputLayoutDesc;                              // InputLayout
+	graphicsPipelineStateDesc.VS = {vsBlob->GetBufferPointer(), vsBlob->GetBufferSize()}; // VertexShader
+	graphicsPipelineStateDesc.PS = {psBlob->GetBufferPointer(), psBlob->GetBufferSize()}; // PixelShader
+	graphicsPipelineStateDesc.BlendState = blendDesc;                                     // BlendState
+	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;                           // RasterizerState
 	// 書き込むRTVの情報
 	graphicsPipelineStateDesc.NumRenderTargets = 1; // 1つのRTVに書き込む ※2つ同時にしようと思えばできる
 	graphicsPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
@@ -133,6 +132,58 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ID3D12PipelineState* graphicsPipelineState = nullptr;
 	hr = dxCommon->GetDevice()->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&graphicsPipelineState));
 	assert(SUCCEEDED(hr));
+
+
+	// VertexResourceの生成 ---------------------------------------------------------------------------
+	// 頂点リソース用のヒープの設定
+	D3D12_HEAP_PROPERTIES uploadHeapProperties{};
+	uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD; // CPUから書き込むヒープ
+
+	// 頂点リソースの設定
+	D3D12_RESOURCE_DESC vertexResourceDesc{};
+	vertexResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER; // バッファ
+	vertexResourceDesc.Width = sizeof(Vector4) * 3;                 // リソースのサイズ。今回は Vector4を3頂点分
+	// バッファの場合はこれらは1にする決まり
+	vertexResourceDesc.Height = 1;
+	vertexResourceDesc.DepthOrArraySize = 1;
+	vertexResourceDesc.MipLevels = 1;
+	vertexResourceDesc.SampleDesc.Count = 1;
+	// バッファの場合はこれにする決まり
+	vertexResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	// 実際に頂点リソースを生成する
+	ID3D12Resource* vertexResource = nullptr;
+	hr = dxCommon->GetDevice()->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &vertexResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertexResource));
+
+	assert(SUCCEEDED(hr)); // うまくいかなかったときは起動できない
+
+
+	// VertexBufferViewを作成する --------------------------------------------------------------------------
+
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+
+	// リソースの先頭アドレスから使う
+	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+
+	// 使用するリソースのサイズは頂点3つ分のサイズ
+	vertexBufferView.SizeInBytes = sizeof(Vector4) * 3;
+
+	// 1つの頂点のサイズ
+	vertexBufferView.StrideInBytes = sizeof(Vector4);
+
+
+	// 頂点リソースにデータを書き込む ------------------------------------------------------------------
+
+	Vector4* vertexData = nullptr;
+
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+
+	vertexData[0] = {-0.5f, -0.5f, 0.0f, 1.0f}; // 左下
+	vertexData[1] = {0.0f, 0.5f, 0.0f, 1.0f};   // 上
+	vertexData[2] = {0.5f, -0.5f, 0.0f, 1.0f};  // 右下
+
+	// 頂点リソースのマップを解除する
+	vertexResource->Unmap(0, nullptr);
 
 
 
@@ -165,9 +216,32 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		dxCommon->PreDraw();
 		// ここに描画処理を記述する
 
+
+		// コマンドを積む
+		commandList->SetGraphicsRootSignature(rootSignature);     // RootSignatureの設定
+		commandList->SetPipelineState(graphicsPipelineState);     // PSOの設定をする
+		commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // VBVの設定をする
+		// トポロジの設定
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		// 頂点数、インデックス数、インデックスの開始位置、インデックスのオフセット
+		commandList->DrawInstanced(3, 1, 0, 0);
+
+
 		// 描画終了
 		dxCommon->PostDraw();
 	}
+
+
+	// 解放処理
+	vertexResource->Release();
+	graphicsPipelineState->Release();
+	signatureBlob->Release();
+	if (errorBlob) {
+		errorBlob->Release();
+	}
+	rootSignature->Release();
+	vsBlob->Release();
+	psBlob->Release();
 
 	// エンジンの終了処理
 	KamataEngine::Finalize();
