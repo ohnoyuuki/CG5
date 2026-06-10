@@ -1,6 +1,7 @@
 #include "KamataEngine.h"
 #include <Windows.h>
-#include <d3dcompiler.h>
+#include "Shader.h"
+//#include <d3dcompiler.h>
 
 using namespace KamataEngine;
 

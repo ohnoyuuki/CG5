@@ -1,18 +1,21 @@
 #pragma once
-#include <string>
-#include <d3d12.h>
+#include <d3d12.h> // ID3DBlob
+#include <string>  // wstring, string
 
 class Shader {
-
 public:
-	// シェーダーファイルを読み込み、コンパイル済みデータを生成する
+	// シェーダーファイルを読み込み、コンパイル済データを生成する
 	void Load(const std::wstring& filePath, const std::string& shaderModel);
 
 	// 生成したコンパイル済みデータを取得する
 	ID3DBlob* GetBlob();
 
-	//コンストラクタ
+	// コンストラクタ
 	Shader();
-	//デストラクタ
+
+	// デストラクタ
 	~Shader();
+
+private:
+	ID3D10Blob* blob_ = nullptr; // コンストラクタで初期化しなくていい ※C++11以降
 };
