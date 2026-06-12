@@ -25,7 +25,9 @@ void Shader::Load(const std::wstring& filePath, const std::string& shaderModel) 
 	blob_ = shaderBlob;
 }
 
-ID3DBlob* Shader::GetBlob() { return blob_; }
+ID3DBlob* Shader::GetBlob() { 
+	return blob_; 
+}
 
 Shader::Shader() {}
 
