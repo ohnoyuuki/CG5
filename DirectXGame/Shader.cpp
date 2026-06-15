@@ -3,7 +3,7 @@
 #include <d3dcompiler.h>    // D3DCompileFromFile
 #include <cassert>          // assert
 
-void Shader::Load(const std::wstring& filePath, const std::string& shaderModel) {
+void Shader::Load(const std::wstring& filePath, const std::wstring& shaderModel) {
 	ID3DBlob* shaderBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
 	HRESULT hr = D3DCompileFromFile(
