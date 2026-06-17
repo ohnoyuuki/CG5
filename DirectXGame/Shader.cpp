@@ -1,21 +1,21 @@
 #include "Shader.h"
-#include "Shader.h"
 #include <d3dcompiler.h>    // D3DCompileFromFile
-#include <cassert>          // assert
+#include <cassert>
+#include"MiscUtility.h"
 
 void Shader::Load(const std::wstring& filePath, const std::wstring& shaderModel) {
 	ID3DBlob* shaderBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
 
 	// wstringをstringに変換する
-	std::string mbShaderModel = ConvertString(shaderModel);
+	std::string filePathStr = ConvertString(filePath);
 
 	//Shaderのコンパイル
 	HRESULT hr = D3DCompileFromFile(
 	    filePath.c_str(), // シェーダファイル名
 	    nullptr,
 	    D3D_COMPILE_STANDARD_FILE_INCLUDE,               // インクルード可能にする
-	    "main", shaderModel.c_str(),                     // エントリーポイント名、シェーダーモデル指定
+	    "main", ConvertString(shaderModel).c_str(),       // エントリーポイント名、シェーダーモデル指定
 	    D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // デバッグ用設定
 	    0, &shaderBlob, &errorBlob);
 	// エラーが発生した場合、止める
