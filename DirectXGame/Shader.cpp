@@ -2,6 +2,9 @@
 #include <d3dcompiler.h>    // D3DCompileFromFile
 #include <cassert>
 #include"MiscUtility.h"
+#include<dxcapi.h>
+#pragma comment(lib, "dxcompiler.lib") // D3DCompileFromFileを使うためのライブラリ
+
 
 void Shader::Load(const std::wstring& filePath, const std::wstring& shaderModel) {
 	ID3DBlob* shaderBlob = nullptr;
