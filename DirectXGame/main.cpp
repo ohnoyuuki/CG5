@@ -2,10 +2,14 @@
 #include <Windows.h>
 #include "Shader.h"
 #include"rootSignature.h"
+#include"PipelineState.h"
 
 //#include <d3dcompiler.h>
 
 using namespace KamataEngine;
+
+//関数プロトタイプ宣言
+void SetupPipelineState(PipelineState* pipelineState,RootSignature&rs,Shader&vs,Shader&ps);
 
 //// シェーダーコンパイル関数
 //ID3DBlob* CompileShader(const std::wstring& filePath, const std::string& shaderModel) {
