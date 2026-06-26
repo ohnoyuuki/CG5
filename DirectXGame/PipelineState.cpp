@@ -18,10 +18,13 @@ void PipelineState::Create(D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineSt
 }
 
 //生成したPipelineStateを返す
-ID3D12PipelineState* PipelineState::Get() { return pipelineState_; }
+ID3D12PipelineState* PipelineState::Get() { 
+	return pipelineState_;
+}
 
 // コンストラクタ
 PipelineState::PipelineState() {}
+
 // デストラクタ
 PipelineState::~PipelineState() { 
 	if (pipelineState_) { 
