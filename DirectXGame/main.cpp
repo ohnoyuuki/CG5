@@ -1,8 +1,8 @@
 #include "KamataEngine.h"
 #include "PipelineState.h"
 #include "Shader.h"
-#include "rootSignature.h"
 #include "VertexBuffer.h"
+#include "rootSignature.h"
 #include <Windows.h>
 
 // #include <d3dcompiler.h>
@@ -53,7 +53,6 @@ void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader&
 	graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 	// 準備は整った。PSOを生成する
 	pipelineState->Create(graphicsPipelineStateDesc);
-
 }
 
 // Windowsアプリでのエントリーポイント(main関数)
@@ -88,7 +87,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// ピクセルシェーダの読み込みとコンパイル
 	Shader ps;
 	ps.LoadDxc(L"Resources/shaders/TestPS.hlsl", L"ps_6_0");
-	
+
 	assert(ps.GetDxcBlob() != nullptr);
 
 	// PapelineStateの生成
@@ -99,16 +98,15 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	VertexBuffer vb;
 	vb.Create(sizeof(Vector4) * 3, sizeof(Vector4));
 
-
 	// 頂点リソースにデータを書き込む ------------------------------------------------------------------
 	Vector4* vertexData = nullptr;
 	vb.Get()->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
 	vertexData[0] = {-0.5f, -0.5f, 0.0f, 1.0f}; // 左下
-	vertexData[1] = { 0.0f,  0.5f, 0.0f, 1.0f};   // 上
-	vertexData[2] = { 0.5f, -0.5f, 0.0f, 1.0f};  // 右下
+	vertexData[1] = {0.0f, 0.5f, 0.0f, 1.0f};   // 上
+	vertexData[2] = {0.5f, -0.5f, 0.0f, 1.0f};  // 右下
 
 	// 頂点リソースのマップを解除する
-	//vb.Get()->Unmap(0, nullptr);
+	// vb.Get()->Unmap(0, nullptr);
 
 	// メインループ
 	while (true) {
@@ -122,8 +120,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// ここに描画処理を記述する
 
 		// コマンドを積む
-		commandList->SetGraphicsRootSignature(rs.Get());          // RootSignatureの設定
-		commandList->SetPipelineState(pipelineState.Get());             // PSOの設定をする
+		commandList->SetGraphicsRootSignature(rs.Get());     // RootSignatureの設定
+		commandList->SetPipelineState(pipelineState.Get());  // PSOの設定をする
 		commandList->IASetVertexBuffers(0, 1, vb.GetView()); // VBVの設定をする
 		// トポロジの設定
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
