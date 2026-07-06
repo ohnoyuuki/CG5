@@ -1,9 +1,9 @@
-#include"TestVS.hlsl"
+#include"resources/shaders/Test.hlsli"
 
-struct VertexShaderOutput
-{
-    float32_t4 position : SV_POSITION;
-};
+//struct VertexShaderOutput
+//{
+//    float32_t4 position : SV_POSITION;
+//};
 
 struct VertexShaderInput
 {
@@ -15,6 +15,7 @@ VertexShaderOutput main(VertexShaderInput input)
 {
     VertexShaderOutput output;
     output.position = input.position;
+    output.texcoord = input.texcoord;
     return output;
 }
 

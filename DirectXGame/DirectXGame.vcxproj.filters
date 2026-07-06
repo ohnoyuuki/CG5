@@ -73,7 +73,6 @@
     </FxCompile>
     <FxCompile Include="TestVS.hlsl" />
     <FxCompile Include="TestPS.hlsl" />
-    <FxCompile Include="Resources\shaders\Test.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\shaders\Sprite.hlsli">
@@ -91,6 +90,7 @@
     <None Include="Resources\shaders\Terrain.hlsli">
       <Filter>シェーダー ファイル</Filter>
     </None>
+    <None Include="Resources\shaders\Test.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
