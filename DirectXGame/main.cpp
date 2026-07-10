@@ -86,13 +86,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// vertexShaderをコンパイルする------------------------------------------------------------------------------------------
 	// 頂点シェーダの読み込みとコンパイル
 	Shader vs;
-	vs.LoadDxc(L"Resources/shaders/TestVS.hlsl", L"vs_6_0");
+	vs.LoadDxc(L"TestVS.hlsl", L"vs_6_0");
 	assert(vs.GetDxcBlob() != nullptr);
 
 	// PixeShader------------------------------------------------------------------------------------------
 	// ピクセルシェーダの読み込みとコンパイル
 	Shader ps;
-	ps.LoadDxc(L"Resources/shaders/TestPS.hlsl", L"ps_6_0");
+	ps.LoadDxc(L"TestPS.hlsl", L"ps_6_0");
 
 	assert(ps.GetDxcBlob() != nullptr);
 
