@@ -61,6 +61,30 @@ void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader&
 	pipelineState->Create(graphicsPipelineStateDesc);
 }
 
+
+// RenderTextureResourceの生成	
+ID3D12Resource* CreateRenderTextureResource(ID3D12Debug* device, uint32_t width, uint32_t height, DXGI_FORMAT format, const FLOAT* clearColor) {
+	//1.生成するRenderTextureのDescの設定
+	D3D12_RESOURCE_DESC resourceDesc{};
+	resourceDesc.Width = UINT(width);
+	resourceDesc.Height = UINT(height);
+	resourceDesc.MipLevels = 1;
+	resourceDesc.DepthOrArraySize = 1;
+	resourceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	resourceDesc.SampleDesc.Count = 1;
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET; // RenderTargetとして使うためのフラグ
+
+
+
+}
+
+	
+
+
+
+//-----------------------------------------------------------------------------
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
