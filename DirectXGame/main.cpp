@@ -61,27 +61,47 @@ void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader&
 	pipelineState->Create(graphicsPipelineStateDesc);
 }
 
-
-// RenderTextureResourceの生成	
-ID3D12Resource* CreateRenderTextureResource(ID3D12Debug* device, uint32_t width, uint32_t height, DXGI_FORMAT format, const FLOAT* clearColor) {
-	//1.生成するRenderTextureのDescの設定
+// RenderTextureResourceの生成
+ID3D12Resource* CreateRenderTextureResource(ID3D12Debug* device, uint32_t width, uint32_t height, DXGI_FORMAT clearformat, const FLOAT* clearColor) {
+	// 1.生成するRenderTextureのDescの設定
 	D3D12_RESOURCE_DESC resourceDesc{};
-	resourceDesc.Width = UINT(width);
-	resourceDesc.Height = UINT(height);
-	resourceDesc.MipLevels = 1;
-	resourceDesc.DepthOrArraySize = 1;
-	resourceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	resourceDesc.SampleDesc.Count = 1;
-	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resourceDesc.Width = UINT(width);                             // RenderTextureの幅
+	resourceDesc.Height = UINT(height);                           // RenderTextureの高さ
+	resourceDesc.MipLevels = 1;                                   // mipmapの数
+	resourceDesc.DepthOrArraySize = 1;                            // 奥行or配列Textureの配列数
+	resourceDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;        // Textureのフォーマット
+	resourceDesc.SampleDesc.Count = 1;                            // サンプリングカウント1固定
+	resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;  // Textureの次元数。普段使っているのは2次元
 	resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET; // RenderTargetとして使うためのフラグ
 
+	// 2.利用するHeapの設定
+	D3D12_HEAP_PROPERTIES heapProperties{};
+	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 
+	// 3.ClearValueの用意
+	D3D12_CLEAR_VALUE clearValue{};
+	clearValue.Format = clearformat;
+	clearValue.Color[0] = clearColor[0];
+	clearValue.Color[1] = clearColor[1];
+	clearValue.Color[2] = clearColor[2];
+	clearValue.Color[3] = clearColor[3];
 
+	// 4. RenderTextureResourceの生成
+	ID3D12Resource* resource = nullptr;
+
+	HRESULT hr = device->(
+	    &heapProperties,                            // Heapの設定
+	    D3D12_HEAP_FLAG_NONE,                       // Heapの特殊な設定
+	    &resourceDesc,                              // Resourceの設定
+	    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, // Pixel Shader でアクセスできるようにする
+	    &clearValue,                                // Clear最適値
+	    IID_PPV_ARGS(&resource)                     // 作成するResourceポインタへのポインタ
+	);
+
+	assert(SUCCEEDED(hr));
+
+	return resource;
 }
-
-	
-
-
 
 //-----------------------------------------------------------------------------
 
