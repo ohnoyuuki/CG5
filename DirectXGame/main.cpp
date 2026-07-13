@@ -62,7 +62,7 @@ void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader&
 }
 
 // RenderTextureResourceの生成
-ID3D12Resource* CreateRenderTextureResource(ID3D12Debug* device, uint32_t width, uint32_t height, DXGI_FORMAT clearformat, const FLOAT* clearColor) {
+ID3D12Resource* CreateRenderTextureResource(ID3D12Device* device, uint32_t width, uint32_t height, DXGI_FORMAT clearformat, const FLOAT* clearColor) {
 	// 1.生成するRenderTextureのDescの設定
 	D3D12_RESOURCE_DESC resourceDesc{};
 	resourceDesc.Width = UINT(width);                             // RenderTextureの幅
@@ -89,7 +89,7 @@ ID3D12Resource* CreateRenderTextureResource(ID3D12Debug* device, uint32_t width,
 	// 4. RenderTextureResourceの生成
 	ID3D12Resource* resource = nullptr;
 
-	HRESULT hr = device->(
+	HRESULT hr = device->CreateCommittedResource(
 	    &heapProperties,                            // Heapの設定
 	    D3D12_HEAP_FLAG_NONE,                       // Heapの特殊な設定
 	    &resourceDesc,                              // Resourceの設定
