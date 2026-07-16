@@ -123,9 +123,9 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 	D3D12_HEAP_PROPERTIES heapProperties{};
 	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT; // VARM上に作る(GPUが使う領域にする)
 
-	//深度値のクリア設定
+	// 深度値のクリア設定
 	D3D12_CLEAR_VALUE depthClearValue{};
-	depthClearValue.DepthStencil.Depth = 1.0f; //1.0f(最大値）でクリア（ 深度値の初期値は 1.0f）
+	depthClearValue.DepthStencil.Depth = 1.0f;      // 1.0f(最大値）でクリア（ 深度値の初期値は 1.0f）
 	depthClearValue.Format = DXGI_FORMAT_D32_FLOAT; // Zバッファ形式、resourceと合わせる
 
 	// 3. Resourceの生成
@@ -162,17 +162,57 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	HRESULT hr;
 
 	// RenderTextureResource作成
-	//画面クリア色＃わかりやすいように赤とする
+	// 画面クリア色＃わかりやすいように赤とする
 	const FLOAT kRenderTargetClearColor[4] = {1.0f, 0.0f, 0.0f, 1.0f};
 
-	ID3D12Resource* renderTextureResource =CreateRenderTextureResource(
-		device, WinApp::kWindowWidth, WinApp::kWindowHeight, 
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, kRenderTargetClearColor);
+	ID3D12Resource* renderTextureResource = CreateRenderTextureResource(device, WinApp::kWindowWidth, WinApp::kWindowHeight, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, kRenderTargetClearColor);
 
+	// DepthStencilTextureResource作成
+	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, WinApp::kWindowWidth, WinApp::kWindowHeight);
+
+	// 1. DSV用のDescriptorHeapの作成
+	ID3D12DescriptorHeap* dsvDescriptorHeap = nullptr;
+	D3D12_DESCRIPTOR_HEAP_DESC dsvDescriptorHeapDesc{};
+	dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;   // HeapType
+	dsvDescriptorHeapDesc.NumDescriptors = 1;                      // HeapTypeの個数
+	dsvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE; // DSVはShaderで触らないとする
+
+	hr = device->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(&dsvDescriptorHeap));
+	assert(SUCCEEDED(hr));
+
+	// CPU側から見たHANDLEを取得
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandleCPU = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	//2.DSV用のViewの生成
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT; // DepthStencilResourceのFormatと合わせる
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D; // 2DTexture
+
+
+
+	//DSVHeapの先頭にDSVを作る
+	device->CreateDepthStencilView(depthStencilResource, &dsvDesc, dsvHandleCPU);
 	//------------------------------------------------------------
 
-	// 1. RTV用の DescriptorHeapを作成する
 
+	// ====================================================================
+	// 1. SRV用の DescriptorHeapの作成
+	ID3D12DescriptorHeap* srvDescriptorHeap = nullptr;
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvDescriptorHeapDesc = {};
+	srvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;     // SRV
+	srvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE; // PixelShader から見える
+	srvDescriptorHeapDesc.NumDescriptors = 1;
+
+	hr = device->CreateDescriptorHeap(&srvDescriptorHeapDesc, IID_PPV_ARGS(&srvDescriptorHeap));
+	assert(SUCCEEDED(hr));
+
+	// CPU側からみたHANDLE、GPU側からみたHANDLEを取得しておく
+	D3D12_CPU_DESCRIPTOR_HANDLE srvHandleCPU = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+
+	// 1. RTV用の DescriptorHeapを作成する
 	ID3D12DescriptorHeap* rtvDescriptorHeap = nullptr;
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc{};
@@ -186,14 +226,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandleCPU = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// 2.RTV用のViewを作成する
-	device->CreateRenderTargetView(renderTextureResource, 
-		nullptr,
-		rtvHandleCPU
-	);
-
-
-
-
+	device->CreateRenderTargetView(renderTextureResource, nullptr, rtvHandleCPU);
 
 	// DirectXCommonクラスが管理している、ウィンドウの幅と高さの値の取得
 	int32_t w = dxCommon->GetBackBufferWidth();
