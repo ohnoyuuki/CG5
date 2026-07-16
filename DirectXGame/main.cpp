@@ -212,6 +212,10 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	D3D12_GPU_DESCRIPTOR_HANDLE srvHandleGPU = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 
 
+
+
+
+
 	// 1. RTV用の DescriptorHeapを作成する
 	ID3D12DescriptorHeap* rtvDescriptorHeap = nullptr;
 
