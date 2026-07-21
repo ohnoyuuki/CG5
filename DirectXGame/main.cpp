@@ -11,7 +11,7 @@
 using namespace KamataEngine;
 
 // 関数プロトタイプ宣言
-void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader& vs, Shader& ps) {
+void SetupPipelineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps) {
 	// InputLayout --------------------
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[2] = {};
 	inputElementDescs[0].SemanticName = "POSITION";
@@ -58,7 +58,7 @@ void SetupPipelineState(PipelineState* pipelineState, RootSignature& rs, Shader&
 	graphicsPipelineStateDesc.SampleDesc.Count = 1;
 	graphicsPipelineStateDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 	// 準備は整った。PSOを生成する
-	pipelineState->Create(graphicsPipelineStateDesc);
+	pipelineState.Create(graphicsPipelineStateDesc);
 }
 
 // RenderTextureResourceの生成(プロトタイプ)
@@ -265,7 +265,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
 	// PapelineStateの生成
 	PipelineState pipelineState;
-	SetupPipelineState(&pipelineState, rs, vs, ps);
+	SetupPipelineState(pipelineState, rs, vs, ps);
 
 	struct VertexData {
 		Vector4 position;
@@ -325,10 +325,6 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 			break; // Updateがtrueを返したらループを抜ける
 		}
 
-		// 描画前処理
-		dxCommon->PreDraw();
-		// ここに描画処理を記述する
-
 		// TransitionBarrierを SRV → RTV に設定する
 		D3D12_RESOURCE_BARRIER barrier{};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;                       // TransitionBarrierの設定
@@ -366,6 +362,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		commandList->ClearRenderTargetView(rtvHandleCPU, kRenderTargetClearColor, 0, nullptr);
 		// 指定した深度で画面全体をクリアする
 		commandList->ClearDepthStencilView(dsvHandleCPU, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+			// TransitionBarrierを元に戻し、PixelShaderが扱えるようにする
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;                      // TranslationBarrierの設定
+		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;                           // フラグは None にしておく
+		barrier.Transition.pResource = renderTextureResource;                       // バリアを張る対象のリソース
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;        // 遷移前
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE; // 遷移後
+		commandList->ResourceBarrier(1, &barrier); 
+
+		// 描画前処理
+		dxCommon->PreDraw();
+		// ここに描画処理を記述する
 
 		// コマンドを積む
 		commandList->SetGraphicsRootSignature(rs.Get());     // RootSignatureの設定
